@@ -1,0 +1,14 @@
+venv
+archive
+processed
+*.pkl
+*.xml
+.ipynb_checkpoints
+*.pdf
+*.db
+*.xlsx
+.DS_Store
+*.csv
+*.ipynb
+.pytest_cache
+__pycache__
