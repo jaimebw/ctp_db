@@ -1,41 +1,37 @@
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from collections import defaultdict
 import pandas as pd
-import re
 from .table_structure import *
+import xmltodict
 
+
+def defaultify(d:dict)->defaultdict:
+    """
+    This function takes a dictionary and returns a defaultdict with the same
+    values. Works recursively
+
+    Parameters
+    ----------
+    d : dict
+
+    """
+    if not isinstance(d, dict):
+        return d
+    return defaultdict(lambda: None, {k: defaultify(v) for k, v in d.items()})
 
 def extract_xml(path_to_xml:Path)->dict:
     """
-    Extraction of the XML data from the CTP dataset
+    This function takes a path to an xml file and returns a dictionary with the
+    relevant information for the database
+
+    Parameters
+    ----------
+    path_to_xml : str
     
-    This could be done recursevly.
     """
-    tree = ET.parse(str(path_to_xml))
-    root = tree.getroot()
-    dict0 = defaultdict(lambda: None)
-    for first in root:
-        if not first.text.isspace():
-            dict0[first.tag] = first.text
-        else:
-            dict1 = defaultdict(lambda: None)
-            for second in first:
-                if not second.text.isspace():
-                    dict1[second.tag] = second.text
-                else:
-                    dict2 = defaultdict(lambda: None)
-                    for third in second:
-                        dict3 = defaultdict(lambda: None)
-                        if not third.text.isspace():
-                            dict2[third.tag] = third.text
-                        else:
-                            for forth in third:
-                                dict3[forth.tag] = forth.text
-                            dict2[third.tag] = dict3
-                    dict1[second.tag] = dict2
-            dict0[first.tag] = dict1
-    return dict0
+    with open(path_to_xml) as f:
+        doc = xmltodict.parse(f.read())
+    return defaultify(doc)
 
 
 def migrate_to_sql(input_dict:dict)->None:
@@ -44,6 +40,19 @@ def migrate_to_sql(input_dict:dict)->None:
     pass
 
 def structured_dict(parsed_dict,dataframe = False):
+    """
+    Creates the structured dictionary from the parsed dict of the xml file
+    that will go into the database
+
+    Parameters
+    ----------
+    parsed_dict : dict
+        The dictionary that is returned from the extract_xml function
+    dataframe : bool, optional
+        If True, returns a pandas dataframe, by default False
+    
+    """
+    parsed_dict = parsed_dict["clinical_study"]
     final_dict = {
         "org_study_id":parsed_dict["id_info"]["org_study_id"],
         "secondary_id":parsed_dict["id_info"]["secondary_id"],
