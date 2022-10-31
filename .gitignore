@@ -1,6 +1,7 @@
 venv
 archive
 processed
+.DS_Store
 *.pkl
 *.xml
 .ipynb_checkpoints
