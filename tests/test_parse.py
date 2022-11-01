@@ -15,10 +15,5 @@ test_xml = [
 def test_parse():
     for i in test_xml:
         dict0 = extract_xml(i)
-        df = structured_dict(dict0)
-        pp.pprint(df)
-
-
-def is_unqiue(val, arr):
-    # returns True if the val in arr is unique
-    return arr.count(val) == 1
+        structured_dict(dict0)
+        #pp.pprint(df)

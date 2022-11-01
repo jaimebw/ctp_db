@@ -70,7 +70,7 @@ def structured_dict(parsed_dict, dataframe=False):
 
     """
     parsed_dict = parsed_dict["clinical_study"]
-    final_dict = {
+    CTPgeneral_dict = {
         "org_study_id": parsed_dict["id_info"]["org_study_id"],
         "secondary_id": parsed_dict["id_info"]["secondary_id"],
         "nct_id": parsed_dict["id_info"]["nct_id"],
@@ -98,16 +98,11 @@ def structured_dict(parsed_dict, dataframe=False):
         "minimum_age": parsed_dict["eligibility"]["minimun_age"],
         "maximum_age": parsed_dict["eligibility"]["maximum_age"],
         "healthy_volunteers": parsed_dict["eligibility"]["healthy_volunteers"],
-        # location
-        # "facility":parsed_dict["location"]["facility"]["name"],
-        # # I think this shoud be a whole subtable
-        # #
-        # #
         "country": parsed_dict["location_countries"]["country"],
         "study_first_submitted": parsed_dict["study_first_submitted"],
         "study_first_submitted_qc": parsed_dict[
             "study_first_submitted_qc"
-        ],  # idk if interesting
+        ], 
         "study_first_posted": parsed_dict["study_first_posted"],
         "last_update_submitted": parsed_dict["last_update_submitted"],
         "last_update_submitted_qc": parsed_dict["last_update_submitted_qc"],
@@ -115,12 +110,15 @@ def structured_dict(parsed_dict, dataframe=False):
         "intervetion_browse": get_terms(
             parsed_dict["intervention_browse"]["mesh_term"]
         ),
-        # "primary_outcome":parsed_dict["primary_outcome"]["measure"],
         "start_date": parsed_dict["start_date"],
-        # "time_frame": parsed_dict["primary_outcome"]["time_frame"],
-        # "keyword": parsed_dict["keyword"]
     }
+    StudyDesignInfo_dict = {
+        "invervention_model": parsed_dict["study_design_info"]["intervention_model"],
+        "masking": parsed_dict["study_design_info"]["masking"],
+        "primary_purpose": parsed_dict["study_design_info"]["primary_purpose"],
+    
+    } 
     if dataframe:
-        return pd.DataFrame(final_dict, index=[parsed_dict["id_info"]["nct_id"]])
+        return pd.DataFrame(CTPgeneral_dict, index=[parsed_dict["id_info"]["nct_id"]])
     else:
-        return final_dict
+        return CTPgeneral_dict,StudyDesignInfo_dict
