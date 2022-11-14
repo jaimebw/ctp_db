@@ -15,5 +15,6 @@ test_xml = [
 def test_parse():
     for i in test_xml:
         dict0 = extract_xml(i)
-        structured_dict(dict0)
-        #pp.pprint(df)
+        
+        main_dict = main_schema_dict(dict0)
+        pp.pprint(main_dict)

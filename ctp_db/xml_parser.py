@@ -3,6 +3,8 @@ from collections import defaultdict
 import pandas as pd
 from .table_structure import *
 import xmltodict
+from xml.parsers.expat import ExpatError
+from typing import Dict, DefaultDict
 
 
 def get_terms(val) -> str:
@@ -10,12 +12,12 @@ def get_terms(val) -> str:
     This function takes a string and returns a list of the terms in the string
     """
     if isinstance(val, list):
-        return ",".join(val)
+        return ";".join(val)
     else:
         return val
 
 
-def defaultify(d: dict) -> defaultdict:
+def defaultify(d: Dict):
     """
     This function takes a dictionary and returns a defaultdict with the same
     values. Works recursively
@@ -30,7 +32,7 @@ def defaultify(d: dict) -> defaultdict:
     return defaultdict(lambda: None, {k: defaultify(v) for k, v in d.items()})
 
 
-def extract_xml(path_to_xml: Path) -> dict:
+def extract_xml(path_to_xml: Path):
     """
     This function takes a path to an xml file and returns a dictionary with the
     relevant information for the database
@@ -55,70 +57,66 @@ def acces_info_list(val):
     else:
         return val
 
-
-def structured_dict(parsed_dict, dataframe=False):
+def get_drug_info(parsed_dict):
     """
-    Creates the structured dictionary from the parsed dict of the xml file
-    that will go into the database
+    WIP!!
+    This function takes the parsed dictionary of the xml file and returns a
+    dictionary with the drug information
 
     Parameters
     ----------
     parsed_dict : dict
         The dictionary that is returned from the extract_xml function
-    dataframe : bool, optional
-        If True, returns a pandas dataframe, by default False
 
     """
     parsed_dict = parsed_dict["clinical_study"]
-    CTPgeneral_dict = {
-        "org_study_id": parsed_dict["id_info"]["org_study_id"],
-        "secondary_id": parsed_dict["id_info"]["secondary_id"],
+    drug_info = parsed_dict["intervention"]
+    if isinstance(drug_info, list):
+        drug_info = drug_info[0]
+    drug_dict = {
         "nct_id": parsed_dict["id_info"]["nct_id"],
-        "official_title": parsed_dict["official_title"],
-        "brief_title": parsed_dict["brief_title"],
-        "lead_sponsor": parsed_dict["sponsors"]["lead_sponsor"]["agency"],
-        "agency_class": parsed_dict["sponsors"]["lead_sponsor"]["agency_class"],
-        "source": parsed_dict["source"],
-        "brief_summary": parsed_dict["brief_summary"]["textblock"],
-        "detailed_description": parsed_dict["detailed_description"]["textblock"],
-        "status": parsed_dict["overall_status"],
-        "phase": parsed_dict["phase"],
-        "study_type": parsed_dict["study_type"],
-        "has_expanded_access": parsed_dict["has_expanded_access"],
-        # study desing info
-        # "invervention_model":parsed_dict["study_design_info"]["intervention_model"], # better as indepndent table?
-        # "invervention_model":parsed_dict["study_design_info"]["intervention_model"], # same comment
-        "condition": parsed_dict["condition"],
-        # intervention
-        # "intervention_type":parsed_dict["intervention"]["intervention_type"],
-        # "intervention_name":parsed_dict["intervention"]["intervention_name"],
-        # # eligibility
-        "eligibility_criteria": parsed_dict["eligibility"]["criteria"]["textblock"],
-        "gender": parsed_dict["eligibility"]["gender"],
-        "minimum_age": parsed_dict["eligibility"]["minimun_age"],
-        "maximum_age": parsed_dict["eligibility"]["maximum_age"],
-        "healthy_volunteers": parsed_dict["eligibility"]["healthy_volunteers"],
-        "country": parsed_dict["location_countries"]["country"],
-        "study_first_submitted": parsed_dict["study_first_submitted"],
-        "study_first_submitted_qc": parsed_dict[
-            "study_first_submitted_qc"
-        ], 
-        "study_first_posted": parsed_dict["study_first_posted"],
-        "last_update_submitted": parsed_dict["last_update_submitted"],
-        "last_update_submitted_qc": parsed_dict["last_update_submitted_qc"],
-        "condition_browse": get_terms(parsed_dict["condition_browse"]["mesh_term"]),
-        "intervetion_browse": get_terms(
-            parsed_dict["intervention_browse"]["mesh_term"]
-        ),
-        "start_date": parsed_dict["start_date"],
+        "intervention_type": drug_info["intervention_type"],
+        "intervention_name": drug_info["intervention_name"],
     }
-    StudyDesignInfo_dict = {
-        "invervention_model": parsed_dict["study_design_info"]["intervention_model"],
-        "masking": parsed_dict["study_design_info"]["masking"],
-        "primary_purpose": parsed_dict["study_design_info"]["primary_purpose"],
+    #elif isinstance(drug_info, ):
+    pass
+    #return drug_dict
+
+
+def main_schema_dict(parsed_dict: Dict[str,str]) -> Dict[str,str]:
+    """
+    This function takes the parsed dictionary of the xml file and returns a
+    dictionary with the main schema information
+
+    Parameters
+    ----------
+    parsed_dict : dict
+        The dictionary that is returned from the extract_xml function
+
+    Schema can be found at https://docs.google.com/spreadsheets/d/1nDoMNKbCGw4hKuMX2n5Y4rdsm1TOKV8a3MhVNeBKRBA/edit#gid=0
+    """
+    parsed_dict = parsed_dict["clinical_study"]
     
-    } 
-    if dataframe:
-        return pd.DataFrame(CTPgeneral_dict, index=[parsed_dict["id_info"]["nct_id"]])
-    else:
-        return CTPgeneral_dict,StudyDesignInfo_dict
+    main_schema_dict = {
+        "nct_id": parsed_dict["id_info"]["nct_id"],
+        "org_study_id": parsed_dict["id_info"]["org_study_id"],
+        "brief_title": parsed_dict["brief_title"],
+        "official_title": parsed_dict["official_title"],
+        "overall_status": parsed_dict["overall_status"],
+        "study_type" : parsed_dict["study_type"],
+        "source": parsed_dict["source"],
+        "phase": parsed_dict["phase"],
+        "start_date": parsed_dict["start_date"],
+        "condition": get_terms(parsed_dict["condition"])
+    }
+    try:
+        main_schema_dict["brief_summary"] = parsed_dict["brief_summary"]["textblock"] # some files don't have this
+    except TypeError:
+        main_schema_dict["brief_summary"] = None
+       
+    try:
+        main_schema_dict["detail_description"]= parsed_dict["detailed_description"]["textblock"]
+    except TypeError:
+         main_schema_dict["detail_description"]= None
+
+    return main_schema_dict    

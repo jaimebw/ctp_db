@@ -1,6 +1,36 @@
 from typing import Optional
-from numpy import maximum
 from sqlmodel import Field, SQLModel
+
+class MainTable(SQLModel,table = True):
+    """
+    TO-DO: Add drug table to the schema
+    This class is the main table of the database. It contains the information
+    that is common to all the trials. It is the main table of the database.
+
+    Parameters
+    ----------
+    nct_id : str
+        The unique identifier of the trial
+    brief_title : str
+        The brief title of the trial
+    official_title : str
+        The official title of the trial
+    org_study_id : str
+        The original study identifier of the trial
+    
+        
+    """
+    id: Optional[int] = Field(default=None, primary_key=True)
+    nct_id: str
+    org_study_id: Optional[str] = Field(default=None)
+    brief_title: Optional[str] = Field(default=None)
+    official_title: Optional[str] = Field(default=None)
+    brief_summary: Optional[str] = Field(default=None)
+    
+class DrugTable(SQLModel,table = True):
+    # WIP!!!
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
 
 
 class CTPgeneral(SQLModel, table=True):
