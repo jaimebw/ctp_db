@@ -47,41 +47,54 @@ def extract_xml(path_to_xml: Path):
     return defaultify(doc)
 
 
-def migrate_to_sql(input_dict: dict) -> None:
-    pass
-
-
-def acces_info_list(val):
-    if isinstance(val, list):
-        return val[0]
-    else:
-        return val
-
-def get_drug_info(parsed_dict):
+def drug_schema_dict(parsed_dict: Dict[str,str])->Dict[str,str]:
     """
-    WIP!!
     This function takes the parsed dictionary of the xml file and returns a
-    dictionary with the drug information
+    dictionary with the drug schema information
 
     Parameters
     ----------
     parsed_dict : dict
         The dictionary that is returned from the extract_xml function
+    
+    Schema can be found at https://docs.google.com/spreadsheets/d/1nDoMNKbCGw4hKuMX2n5Y4rdsm1TOKV8a3MhVNeBKRBA/edit#gid=0
 
     """
     parsed_dict = parsed_dict["clinical_study"]
-    drug_info = parsed_dict["intervention"]
-    if isinstance(drug_info, list):
-        drug_info = drug_info[0]
-    drug_dict = {
-        "nct_id": parsed_dict["id_info"]["nct_id"],
-        "intervention_type": drug_info["intervention_type"],
-        "intervention_name": drug_info["intervention_name"],
-    }
-    #elif isinstance(drug_info, ):
-    pass
-    #return drug_dict
+    
+    if parsed_dict["intervention"] is None:
+        return [ {"nct_id":parsed_dict["id_info"]["nct_id"],"drug_name": None}, 
+                 {"nct_id":parsed_dict["id_info"]["nct_id"],"drug_name": None}] # this is done to stop in case there is no intervention field
 
+
+    if type(parsed_dict["intervention"]) == list:
+        for intervention in parsed_dict["intervention"]:
+            if intervention["intervention_type"] == "Drug":
+                try:
+                    drug_dict = {
+                        "nct_id": parsed_dict["id_info"]["nct_id"],
+                        "drug_name": intervention["intervention_name"],
+                    }
+                except TypeError:
+                     drug_dict = {
+                        "nct_id": parsed_dict["id_info"]["nct_id"],
+                        "drug_name": None,
+                    }
+                yield drug_dict
+    else:
+        if parsed_dict["intervention"]["intervention_type"] == "Drug":
+            try:
+                drug_dict = {
+                            "nct_id": parsed_dict["id_info"]["nct_id"],
+                            "drug_name": parsed_dict["intervention"]["intervention_name"],
+                        }
+            except TypeError:
+                 drug_dict = {
+                         "nct_id": parsed_dict["id_info"]["nct_id"],
+                         "drug_name": None,
+                    }
+            
+            yield drug_dict
 
 def main_schema_dict(parsed_dict: Dict[str,str]) -> Dict[str,str]:
     """
@@ -115,8 +128,8 @@ def main_schema_dict(parsed_dict: Dict[str,str]) -> Dict[str,str]:
         main_schema_dict["brief_summary"] = None
        
     try:
-        main_schema_dict["detail_description"]= parsed_dict["detailed_description"]["textblock"]
+        main_schema_dict["detailed_description"]= parsed_dict["detailed_description"]["textblock"]
     except TypeError:
-         main_schema_dict["detail_description"]= None
+         main_schema_dict["detailed_description"]= None
 
     return main_schema_dict    

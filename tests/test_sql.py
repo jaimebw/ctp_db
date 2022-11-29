@@ -5,22 +5,39 @@ from ctp_db.xml_parser import *
 
 
 test_xml = [
-    Path("/Users/jaime/repos/ctp/archive/NCT0000xxxx/NCT00000102.xml"),
-    Path("/Users/jaime/repos/ctp/archive/NCT0107xxxx/NCT01077518.xml"),
+    Path("tests/test_files/NCT00000102.xml"),
+    Path("tests/test_files/NCT01077518.xml"),
 ]
 
-def test_sql_insert():
-    engine = create_engine("sqlite:///testing_database.db")
-    SQLModel.metadata.create_all(engine) 
+engine = create_engine("sqlite:///testing_database.db")
+SQLModel.metadata.create_all(engine) 
+
+def test_sql_main_schema():
+    """
+    This function tests the main_schema_dict function for the xml_parser.py 
+    can be added to an sql database
+    """
+    
     for i in test_xml:
         dict0 = extract_xml(i)
-        CTPdict, STDIdict = structured_dict(dict0)
-        add_StudyDesingInfo = StudyDesignInfo(**STDIdict)
-        add_CTPgeneral = CTPgeneral(**CTPdict,
-                study_desing_info_id=add_StudyDesingInfo.id)
-
+        CTPdict = main_schema_dict(dict0)
+        add_CTPgeneral = MainTable(**CTPdict)
         with Session(engine) as session:
             session.add(add_CTPgeneral)
-            session.add(add_StudyDesingInfo)
             session.commit()
             print(f"\n Added {i.stem}")
+
+def test_sql_drug_schema():
+    """
+    This function tests the drug_schema_dict function for the xml_parser.py
+    can be added to an sql database
+    """
+    for i in test_xml:
+        dict0 = extract_xml(i)
+        drug_dict = drug_schema_dict(dict0)
+        for drug_entry in drug_dict:
+            add_drug = DrugTable(**drug_entry)
+            with Session(engine) as session:
+                session.add(add_drug)
+                session.commit()
+        print(f"\n Added {i.stem}")
