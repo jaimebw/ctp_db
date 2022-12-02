@@ -1,5 +1,5 @@
 from typing import Optional
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel,Relationship
 
 class MainTable(SQLModel,table = True):
     """
@@ -33,6 +33,7 @@ class MainTable(SQLModel,table = True):
     conditon: Optional[str] = Field(default=None)
     brief_summary: Optional[str] = Field(default=None)
     detailed_description: Optional[str] = Field(default=None)
+    #drug_id: Optional[int] = Field(default=None, foreign_key="drug.id")
 
     
 class DrugTable(SQLModel,table = True):
@@ -48,10 +49,10 @@ class DrugTable(SQLModel,table = True):
     drug_name : str
         The name of the drug used in the trial
     """
-    
     id: Optional[int] = Field(default=None, primary_key=True)
-    nct_id: str
+    nct_id:  Optional[str] = Field(default=None, foreign_key="maintable.nct_id")
     drug_name: str
+    #main_table_id: Optional[int] = Field(default=None, foreign_key="main_table.id")
 
 
 """
